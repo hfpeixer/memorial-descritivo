@@ -126,7 +126,7 @@ const VerticeForm: React.FC<VerticeFormProps> = ({ vertice, onClose }) => {
                   name="longitude"
                   value={formData.longitude}
                   onChange={handleChange}
-                  placeholder="00°00'00.0\"W"
+                  placeholder="00°00'00.0&quot;W"
                   required
                 />
               </div>
@@ -138,7 +138,7 @@ const VerticeForm: React.FC<VerticeFormProps> = ({ vertice, onClose }) => {
                   name="latitude"
                   value={formData.latitude}
                   onChange={handleChange}
-                  placeholder="00°00'00.0\"S"
+                  placeholder="00°00'00.0&quot;S"
                   required
                 />
               </div>
