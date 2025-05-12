@@ -189,7 +189,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
                 <Label htmlFor="paste-data">Cole seus dados aqui (uma linha por vértice):</Label>
                 <Textarea
                   id="paste-data"
-                  placeholder="V1,V2,00°00'00.0"W,00°00'00.0"S,10.5,Confrontante"
+                  placeholder="V1,V2,00°00'00.0&quot;W,00°00'00.0&quot;S,10.5,Confrontante"
                   className="h-32 mt-1 font-mono"
                   value={pastedData}
                   onChange={handlePastedDataChange}
