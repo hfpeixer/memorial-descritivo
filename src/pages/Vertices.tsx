@@ -6,8 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMemorial } from "@/contexts/MemorialContext";
 import { Vertice } from "@/types";
-import { Plus, ArrowRight, MapPin, Pen } from "lucide-react";
+import { Plus, ArrowRight, MapPin, Pen, Upload } from "lucide-react";
 import VerticeForm from "@/components/VerticeForm";
+import VerticeImportForm from "@/components/VerticeImportForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const Vertices = () => {
@@ -15,6 +16,7 @@ const Vertices = () => {
   const navigate = useNavigate();
   
   const [showForm, setShowForm] = useState(false);
+  const [showImportForm, setShowImportForm] = useState(false);
   const [editingVertice, setEditingVertice] = useState<Vertice | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
 
@@ -28,6 +30,15 @@ const Vertices = () => {
     setShowForm(true);
   };
 
+  const handleImport = () => {
+    if (confrontantes.length === 0) {
+      alert("É necessário cadastrar pelo menos um confrontante antes de importar vértices.");
+      navigate("/confrontantes");
+      return;
+    }
+    setShowImportForm(true);
+  };
+
   const handleEdit = (vertice: Vertice) => {
     setEditingVertice(vertice);
     setShowForm(true);
@@ -36,6 +47,10 @@ const Vertices = () => {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingVertice(null);
+  };
+
+  const handleImportFormClose = () => {
+    setShowImportForm(false);
   };
 
   const handleDeleteConfirm = (id: string) => {
@@ -59,9 +74,18 @@ const Vertices = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="page-title">Vértices</h1>
-          <Button onClick={handleAddNew} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Adicionar Vértice
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleImport} 
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" /> Importar Vértices
+            </Button>
+            <Button onClick={handleAddNew} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Adicionar Vértice
+            </Button>
+          </div>
         </div>
         
         {vertices.length === 0 ? (
@@ -69,9 +93,14 @@ const Vertices = () => {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <MapPin className="h-12 w-12 text-gray-400 mb-2" />
               <p className="text-gray-500 mb-4">Nenhum vértice cadastrado</p>
-              <Button onClick={handleAddNew} variant="outline" className="flex items-center gap-2">
-                <Plus className="w-4 h-4" /> Adicionar Vértice
-              </Button>
+              <div className="flex gap-4">
+                <Button onClick={handleImport} variant="outline" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" /> Importar Vértices
+                </Button>
+                <Button onClick={handleAddNew} variant="outline" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Adicionar Vértice
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -130,6 +159,10 @@ const Vertices = () => {
             onClose={handleFormClose}
             vertice={editingVertice}
           />
+        )}
+
+        {showImportForm && (
+          <VerticeImportForm onClose={handleImportFormClose} />
         )}
         
         <AlertDialog open={!!deleteConfirmation} onOpenChange={() => setDeleteConfirmation(null)}>

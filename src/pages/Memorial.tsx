@@ -1,20 +1,30 @@
 
-import React, { useRef } from "react";
+import React, { useState, useRef } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMemorial } from "@/contexts/MemorialContext";
-import { ArrowRight, FileText, Printer, Download } from "lucide-react";
+import { ArrowRight, FileText, Printer, Download, UserPlus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import ResponsavelTecnicoForm from "@/components/ResponsavelTecnicoForm";
 
 const Memorial = () => {
-  const { getMemorialDescritivo, confrontantes } = useMemorial();
+  const { getMemorialDescritivo, responsavelTecnico } = useMemorial();
   const { toast } = useToast();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const [showResponsavelForm, setShowResponsavelForm] = useState(false);
   
   const memorial = getMemorialDescritivo();
+
+  const handleShowResponsavelForm = () => {
+    setShowResponsavelForm(true);
+  };
+  
+  const handleResponsavelFormClose = () => {
+    setShowResponsavelForm(false);
+  };
   
   if (!memorial) {
     return (
@@ -57,15 +67,23 @@ const Memorial = () => {
             <title>Memorial Descritivo</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-              h1 { text-align: center; font-size: 20px; margin-bottom: 30px; }
+              h1 { text-align: center; font-size: 22px; margin-bottom: 30px; font-weight: bold; }
               h2 { font-size: 16px; margin-top: 30px; margin-bottom: 10px; }
               table { width: 100%; border-collapse: collapse; margin: 10px 0; }
               table, th, td { border: 1px solid #ddd; }
               th, td { padding: 8px; text-align: left; }
               th { background-color: #f0f0f0; }
               .header { text-align: center; margin-bottom: 30px; }
+              .text-center { text-align: center; }
+              .pt-8 { padding-top: 32px; }
+              .mt-16 { margin-top: 64px; }
+              .mb-8 { margin-bottom: 32px; }
+              .flex-column { display: flex; flex-direction: column; align-items: center; }
+              .flex-row { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-around; }
+              .signature-box { width: 45%; text-align: center; margin-bottom: 24px; }
               @media print {
                 button { display: none; }
+                .new-page { page-break-before: always; }
               }
             </style>
           </head>
@@ -97,31 +115,35 @@ const Memorial = () => {
     const text = `
 MEMORIAL DESCRITIVO
 
-Projeto: ${memorial.projeto.nome}
+1. Beneficiários:
+${memorial.beneficiarios.map(b => `Nome: ${b.nome} - CPF/CNPJ: ${b.documento}`).join('\n')}
+
+2. Identificação do Imóvel:
 Endereço: ${memorial.projeto.endereco}
 Área: ${memorial.projeto.area} m²
 Perímetro: ${memorial.projeto.perimetro} m
-Época da Medição: ${memorial.projeto.epocaMedicao}
-Instrumento: ${memorial.projeto.instrumentoUtilizado}
 
-BENEFICIÁRIO:
-Nome: ${memorial.beneficiario.nome}
-Documento: ${memorial.beneficiario.documento}
-Endereço: ${memorial.beneficiario.rua}, ${memorial.beneficiario.numero} - ${memorial.beneficiario.bairro}, ${memorial.beneficiario.cidade}
+3. Época da Medição: ${memorial.projeto.epocaMedicao}
 
-CONFRONTANTES:
-${memorial.confrontantes.map(c => `${c.direcao}: ${c.nome} (${c.documento})
-Endereço: ${c.rua}, ${c.numero} - ${c.bairro}, ${c.cidade}`).join('\n\n')}
+4. Instrumento Utilizado: ${memorial.projeto.instrumentoUtilizado}
 
-VÉRTICES:
-${memorial.vertices.map(v => {
+5. Sistema Geodésico de Referência: ${memorial.projeto.sistemaGeodesico}
+
+6. Projeção Cartográfica: ${memorial.projeto.projecaoCartografica}
+
+7. Tabela de Coordenadas, Medidas e Confrontações:
+${memorial.vertices.map((v, index) => {
   const confrontante = memorial.confrontantes.find(c => c.id === v.confrontanteId);
-  return `De ${v.deVertice} para ${v.paraVertice}
-  Longitude: ${v.longitude}
-  Latitude: ${v.latitude}
-  Distância: ${v.distancia} m
-  Confrontante: ${confrontante ? confrontante.nome : ""}`;
-}).join('\n\n')}
+  return `${index + 1}. De ${v.deVertice} para ${v.paraVertice} - Longitude: ${v.longitude} - Latitude: ${v.latitude} - Distância: ${v.distancia} m - Confrontante: ${confrontante?.nome || ""}`;
+}).join('\n')}
+
+${memorial.responsavelTecnico ? 
+`DADOS DO RESPONSÁVEL TÉCNICO:
+Nome: ${memorial.responsavelTecnico.nome}
+Cargo: ${memorial.responsavelTecnico.cargo}
+Registro CFT: ${memorial.responsavelTecnico.registroCFT}` : ''}
+
+Data: ${new Date().toLocaleDateString()}
     `;
     
     const blob = new Blob([text], { type: 'text/plain' });
@@ -159,19 +181,33 @@ ${memorial.vertices.map(v => {
           <CardContent className="p-6">
             <div ref={printRef}>
               <div className="header mb-8 text-center">
-                <h1 className="text-2xl font-bold uppercase mb-2">Memorial Descritivo</h1>
+                <h1 className="text-2xl font-bold uppercase mb-2">MEMORIAL DESCRITIVO</h1>
                 <p className="text-gray-500">{new Date().toLocaleDateString()}</p>
               </div>
 
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">1. Identificação do Imóvel</h2>
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">1. Beneficiário(s)</h2>
+              <table className="w-full border mb-6">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="p-2 text-left">Nome</th>
+                    <th className="p-2 text-left">CPF/CNPJ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {memorial.beneficiarios.map((beneficiario) => (
+                    <tr key={beneficiario.id}>
+                      <td className="p-2">{beneficiario.nome}</td>
+                      <td className="p-2">{beneficiario.documento}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">2. Identificação do Imóvel</h2>
               <table className="w-full border mb-6">
                 <tbody>
                   <tr>
-                    <th className="w-1/3 text-left p-2 bg-gray-50">Nome do Projeto</th>
-                    <td className="p-2">{memorial.projeto.nome}</td>
-                  </tr>
-                  <tr>
-                    <th className="text-left p-2 bg-gray-50">Endereço</th>
+                    <th className="w-1/3 text-left p-2 bg-gray-50">Endereço</th>
                     <td className="p-2">{memorial.projeto.endereco}</td>
                   </tr>
                   <tr>
@@ -182,66 +218,22 @@ ${memorial.vertices.map(v => {
                     <th className="text-left p-2 bg-gray-50">Perímetro</th>
                     <td className="p-2">{memorial.projeto.perimetro} m</td>
                   </tr>
-                  <tr>
-                    <th className="text-left p-2 bg-gray-50">Época da Medição</th>
-                    <td className="p-2">{memorial.projeto.epocaMedicao}</td>
-                  </tr>
-                  <tr>
-                    <th className="text-left p-2 bg-gray-50">Instrumento Utilizado</th>
-                    <td className="p-2">{memorial.projeto.instrumentoUtilizado}</td>
-                  </tr>
                 </tbody>
               </table>
 
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">2. Identificação do Beneficiário</h2>
-              <table className="w-full border mb-6">
-                <tbody>
-                  <tr>
-                    <th className="w-1/3 text-left p-2 bg-gray-50">Nome</th>
-                    <td className="p-2">{memorial.beneficiario.nome}</td>
-                  </tr>
-                  <tr>
-                    <th className="text-left p-2 bg-gray-50">CPF/CNPJ</th>
-                    <td className="p-2">{memorial.beneficiario.documento}</td>
-                  </tr>
-                  <tr>
-                    <th className="text-left p-2 bg-gray-50">Endereço</th>
-                    <td className="p-2">
-                      {memorial.beneficiario.rua}, {memorial.beneficiario.numero} - {memorial.beneficiario.bairro}, {memorial.beneficiario.cidade}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">3. Época da Medição</h2>
+              <p className="mb-6">{memorial.projeto.epocaMedicao || "Não informada"}</p>
 
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">3. Confrontantes</h2>
-              <table className="w-full border mb-6">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="p-2 text-left">Direção</th>
-                    <th className="p-2 text-left">Nome</th>
-                    <th className="p-2 text-left">Documento</th>
-                    <th className="p-2 text-left">Endereço</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {memorial.confrontantes.map((confrontante) => (
-                    <tr key={confrontante.id}>
-                      <td className="p-2 font-medium">{confrontante.direcao}</td>
-                      <td className="p-2">{confrontante.nome}</td>
-                      <td className="p-2">{confrontante.documento}</td>
-                      <td className="p-2">
-                        {confrontante.rua}, {confrontante.numero} - {confrontante.bairro}, {confrontante.cidade}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">4. Instrumento Utilizado</h2>
+              <p className="mb-6">{memorial.projeto.instrumentoUtilizado || "Não informado"}</p>
 
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">4. Descrição dos Limites</h2>
-              <p className="mb-4">
-                O imóvel tem início pelo vértice {memorial.vertices[0]?.deVertice || "-"} e segue com os seguintes pontos:
-              </p>
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">5. Sistema Geodésico de Referência</h2>
+              <p className="mb-6">{memorial.projeto.sistemaGeodesico || "Não informado"}</p>
 
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">6. Projeção Cartográfica</h2>
+              <p className="mb-6">{memorial.projeto.projecaoCartografica || "Não informada"}</p>
+
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">7. Tabela de Coordenadas, Medidas e Confrontações</h2>
               <table className="w-full border mb-6">
                 <thead>
                   <tr className="bg-gray-50">
@@ -270,21 +262,59 @@ ${memorial.vertices.map(v => {
                 </tbody>
               </table>
 
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">5. Considerações Finais</h2>
-              <p className="mb-6">
-                Todas as coordenadas aqui descritas estão georreferenciadas e os azimutes, distâncias e áreas foram calculados com base nas informações levantadas em campo.
-              </p>
-              
-              <div className="mt-16 pt-8 border-t">
-                <div className="text-center">
+              {memorial.responsavelTecnico ? (
+                <div className="mt-16 pt-8 border-t text-center">
+                  <h2 className="text-lg font-semibold mb-4 uppercase">Dados do Responsável Técnico</h2>
+                  <p className="mb-8">
+                    {memorial.responsavelTecnico.nome}<br />
+                    {memorial.responsavelTecnico.cargo}<br />
+                    {memorial.responsavelTecnico.registroCFT}
+                  </p>
                   <p className="mb-8">____________________________________________</p>
-                  <p className="font-semibold">Responsável Técnico</p>
+                  <p className="font-semibold">Assinatura</p>
+                </div>
+              ) : (
+                <div className="mt-8 text-center">
+                  <Button onClick={handleShowResponsavelForm} className="flex items-center gap-2">
+                    <UserPlus className="w-4 h-4" /> Adicionar Responsável Técnico
+                  </Button>
+                </div>
+              )}
+
+              <div className="mt-16 pt-8 border-t">
+                <h2 className="text-lg font-semibold mb-6 text-center">Tabela de Assinaturas</h2>
+                <div className="flex flex-wrap justify-between">
+                  <div className="w-full md:w-[48%] space-y-6">
+                    <h3 className="text-center font-medium">Beneficiários</h3>
+                    {memorial.beneficiarios.map((beneficiario) => (
+                      <div key={beneficiario.id} className="text-center">
+                        <p className="mb-8">____________________________________________</p>
+                        <p className="font-semibold">{beneficiario.nome}</p>
+                        <p className="text-sm text-gray-500">{beneficiario.documento}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="w-full md:w-[48%] space-y-6">
+                    <h3 className="text-center font-medium">Confrontantes</h3>
+                    {memorial.confrontantes.map((confrontante) => (
+                      <div key={confrontante.id} className="text-center">
+                        <p className="mb-8">____________________________________________</p>
+                        <p className="font-semibold">{confrontante.nome}</p>
+                        <p className="text-sm text-gray-500">{confrontante.documento}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {showResponsavelForm && (
+        <ResponsavelTecnicoForm onClose={handleResponsavelFormClose} />
+      )}
     </Layout>
   );
 };

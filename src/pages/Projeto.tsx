@@ -24,6 +24,8 @@ const Projeto = () => {
     perimetro: 0,
     epocaMedicao: "",
     instrumentoUtilizado: "",
+    sistemaGeodesico: "",
+    projecaoCartografica: "",
   });
 
   useEffect(() => {
@@ -156,6 +158,28 @@ const Projeto = () => {
                     value={formData.instrumentoUtilizado}
                     onChange={handleChange}
                     placeholder="Tipo de instrumento"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="sistemaGeodesico">Sistema Geodésico de Referência</Label>
+                  <Input 
+                    id="sistemaGeodesico"
+                    name="sistemaGeodesico"
+                    value={formData.sistemaGeodesico}
+                    onChange={handleChange}
+                    placeholder="Ex: SIRGAS 2000"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="projecaoCartografica">Projeção Cartográfica</Label>
+                  <Input 
+                    id="projecaoCartografica"
+                    name="projecaoCartografica"
+                    value={formData.projecaoCartografica}
+                    onChange={handleChange}
+                    placeholder="Ex: UTM"
                   />
                 </div>
               </div>

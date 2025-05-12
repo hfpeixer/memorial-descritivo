@@ -1,15 +1,18 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { Projeto, Beneficiario, Confrontante, Vertice, MemorialDescritivo } from "../types";
+import { Projeto, Beneficiario, Confrontante, Vertice, MemorialDescritivo, ResponsavelTecnico } from "../types";
 import { useToast } from "@/components/ui/use-toast";
 
 interface MemorialContextType {
   projeto: Projeto | null;
-  beneficiario: Beneficiario | null;
+  beneficiarios: Beneficiario[];
   confrontantes: Confrontante[];
   vertices: Vertice[];
+  responsavelTecnico: ResponsavelTecnico | null;
   setProjeto: (projeto: Projeto) => void;
-  setBeneficiario: (beneficiario: Beneficiario) => void;
+  addBeneficiario: (beneficiario: Beneficiario) => void;
+  updateBeneficiario: (id: string, beneficiario: Beneficiario) => void;
+  removeBeneficiario: (id: string) => void;
   addConfrontante: (confrontante: Confrontante) => void;
   updateConfrontante: (id: string, confrontante: Confrontante) => void;
   removeConfrontante: (id: string) => void;
@@ -17,6 +20,8 @@ interface MemorialContextType {
   addVertice: (vertice: Vertice) => void;
   updateVertice: (id: string, vertice: Vertice) => void;
   removeVertice: (id: string) => void;
+  importVertices: (vertices: Vertice[]) => void;
+  setResponsavelTecnico: (responsavel: ResponsavelTecnico) => void;
   getMemorialDescritivo: () => MemorialDescritivo | null;
   resetMemorial: () => void;
 }
@@ -37,31 +42,61 @@ interface MemorialProviderProps {
 
 export const MemorialProvider = ({ children }: MemorialProviderProps) => {
   const [projeto, setProjeto] = useState<Projeto | null>(null);
-  const [beneficiario, setBeneficiario] = useState<Beneficiario | null>(null);
+  const [beneficiarios, setBeneficiarios] = useState<Beneficiario[]>([]);
   const [confrontantes, setConfrontantes] = useState<Confrontante[]>([]);
   const [vertices, setVertices] = useState<Vertice[]>([]);
+  const [responsavelTecnico, setResponsavelTecnico] = useState<ResponsavelTecnico | null>(null);
   const { toast } = useToast();
 
   // Carregar dados do localStorage quando o componente montar
   useEffect(() => {
     const loadedProjeto = localStorage.getItem("memorial_projeto");
-    const loadedBeneficiario = localStorage.getItem("memorial_beneficiario");
+    const loadedBeneficiarios = localStorage.getItem("memorial_beneficiarios");
     const loadedConfrontantes = localStorage.getItem("memorial_confrontantes");
     const loadedVertices = localStorage.getItem("memorial_vertices");
+    const loadedResponsavelTecnico = localStorage.getItem("memorial_responsavel_tecnico");
 
     if (loadedProjeto) setProjeto(JSON.parse(loadedProjeto));
-    if (loadedBeneficiario) setBeneficiario(JSON.parse(loadedBeneficiario));
+    if (loadedBeneficiarios) setBeneficiarios(JSON.parse(loadedBeneficiarios));
     if (loadedConfrontantes) setConfrontantes(JSON.parse(loadedConfrontantes));
     if (loadedVertices) setVertices(JSON.parse(loadedVertices));
+    if (loadedResponsavelTecnico) setResponsavelTecnico(JSON.parse(loadedResponsavelTecnico));
   }, []);
 
   // Salvar dados no localStorage sempre que forem atualizados
   useEffect(() => {
     if (projeto) localStorage.setItem("memorial_projeto", JSON.stringify(projeto));
-    if (beneficiario) localStorage.setItem("memorial_beneficiario", JSON.stringify(beneficiario));
+    localStorage.setItem("memorial_beneficiarios", JSON.stringify(beneficiarios));
     localStorage.setItem("memorial_confrontantes", JSON.stringify(confrontantes));
     localStorage.setItem("memorial_vertices", JSON.stringify(vertices));
-  }, [projeto, beneficiario, confrontantes, vertices]);
+    if (responsavelTecnico) localStorage.setItem("memorial_responsavel_tecnico", JSON.stringify(responsavelTecnico));
+  }, [projeto, beneficiarios, confrontantes, vertices, responsavelTecnico]);
+
+  const addBeneficiario = (beneficiario: Beneficiario) => {
+    setBeneficiarios([...beneficiarios, beneficiario]);
+    toast({
+      title: "Beneficiário adicionado",
+      description: `${beneficiario.nome} foi adicionado com sucesso.`,
+    });
+  };
+
+  const updateBeneficiario = (id: string, beneficiario: Beneficiario) => {
+    setBeneficiarios(
+      beneficiarios.map((b) => (b.id === id ? beneficiario : b))
+    );
+    toast({
+      title: "Beneficiário atualizado",
+      description: `${beneficiario.nome} foi atualizado com sucesso.`,
+    });
+  };
+
+  const removeBeneficiario = (id: string) => {
+    setBeneficiarios(beneficiarios.filter((b) => b.id !== id));
+    toast({
+      title: "Beneficiário removido",
+      description: "Beneficiário foi removido com sucesso.",
+    });
+  };
 
   const addConfrontante = (confrontante: Confrontante) => {
     setConfrontantes([...confrontantes, confrontante]);
@@ -129,8 +164,16 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
     });
   };
 
+  const importVertices = (importedVertices: Vertice[]) => {
+    setVertices([...vertices, ...importedVertices]);
+    toast({
+      title: "Vértices importados",
+      description: `${importedVertices.length} vértices foram importados com sucesso.`,
+    });
+  };
+
   const getMemorialDescritivo = (): MemorialDescritivo | null => {
-    if (!projeto || !beneficiario || confrontantes.length === 0 || vertices.length === 0) {
+    if (!projeto || beneficiarios.length === 0 || confrontantes.length === 0 || vertices.length === 0) {
       toast({
         title: "Dados incompletos",
         description: "Preencha todos os dados necessários para gerar o memorial descritivo.",
@@ -141,21 +184,24 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
 
     return {
       projeto,
-      beneficiario,
+      beneficiarios,
       confrontantes,
       vertices,
+      responsavelTecnico
     };
   };
 
   const resetMemorial = () => {
     setProjeto(null);
-    setBeneficiario(null);
+    setBeneficiarios([]);
     setConfrontantes([]);
     setVertices([]);
+    setResponsavelTecnico(null);
     localStorage.removeItem("memorial_projeto");
-    localStorage.removeItem("memorial_beneficiario");
+    localStorage.removeItem("memorial_beneficiarios");
     localStorage.removeItem("memorial_confrontantes");
     localStorage.removeItem("memorial_vertices");
+    localStorage.removeItem("memorial_responsavel_tecnico");
     toast({
       title: "Memorial resetado",
       description: "Todos os dados do memorial foram apagados.",
@@ -164,11 +210,14 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
 
   const value = {
     projeto,
-    beneficiario,
+    beneficiarios,
     confrontantes,
     vertices,
+    responsavelTecnico,
     setProjeto,
-    setBeneficiario,
+    addBeneficiario,
+    updateBeneficiario,
+    removeBeneficiario,
     addConfrontante,
     updateConfrontante,
     removeConfrontante,
@@ -176,6 +225,8 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
     addVertice,
     updateVertice,
     removeVertice,
+    importVertices,
+    setResponsavelTecnico,
     getMemorialDescritivo,
     resetMemorial,
   };

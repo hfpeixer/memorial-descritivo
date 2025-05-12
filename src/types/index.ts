@@ -7,6 +7,8 @@ export interface Projeto {
   perimetro: number;
   epocaMedicao: string;
   instrumentoUtilizado: string;
+  sistemaGeodesico: string;
+  projecaoCartografica: string;
 }
 
 export interface Beneficiario {
@@ -42,9 +44,17 @@ export interface Vertice {
   confrontanteId: string;
 }
 
+export interface ResponsavelTecnico {
+  id: string;
+  nome: string;
+  cargo: string;
+  registroCFT: string;
+}
+
 export interface MemorialDescritivo {
   projeto: Projeto;
-  beneficiario: Beneficiario;
+  beneficiarios: Beneficiario[];
   confrontantes: Confrontante[];
   vertices: Vertice[];
+  responsavelTecnico: ResponsavelTecnico | null;
 }
