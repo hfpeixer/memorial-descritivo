@@ -8,6 +8,7 @@ import { ArrowRight, FileText, Printer, Download, UserPlus } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import ResponsavelTecnicoForm from "@/components/ResponsavelTecnicoForm";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Memorial = () => {
   const { getMemorialDescritivo, responsavelTecnico } = useMemorial();
@@ -15,6 +16,7 @@ const Memorial = () => {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
   const [showResponsavelForm, setShowResponsavelForm] = useState(false);
+  const isMobile = useIsMobile();
   
   const memorial = getMemorialDescritivo();
 
@@ -79,8 +81,24 @@ const Memorial = () => {
               .mt-16 { margin-top: 64px; }
               .mb-8 { margin-bottom: 32px; }
               .flex-column { display: flex; flex-direction: column; align-items: center; }
-              .flex-row { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-around; }
-              .signature-box { width: 45%; text-align: center; margin-bottom: 24px; }
+              .signature-container { 
+                display: flex; 
+                flex-wrap: wrap; 
+                justify-content: space-around; 
+                margin-top: 40px; 
+              }
+              .signature-item { 
+                width: 45%; 
+                text-align: center; 
+                margin-bottom: 30px; 
+              }
+              .signature-line {
+                display: block;
+                width: 100%;
+                max-width: 250px;
+                margin: 0 auto 8px;
+                border-bottom: 1px solid #000;
+              }
               @media print {
                 button { display: none; }
                 .new-page { page-break-before: always; }
@@ -165,7 +183,7 @@ Data: ${new Date().toLocaleDateString()}
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
           <h1 className="page-title">Memorial Descritivo</h1>
           <div className="flex space-x-2">
             <Button onClick={handleExport} variant="outline" className="flex items-center gap-2">
@@ -265,13 +283,12 @@ Data: ${new Date().toLocaleDateString()}
               {memorial.responsavelTecnico ? (
                 <div className="mt-16 pt-8 border-t text-center">
                   <h2 className="text-lg font-semibold mb-4 uppercase">Dados do Responsável Técnico</h2>
-                  <p className="mb-8">
+                  <p className="mb-2">
                     {memorial.responsavelTecnico.nome}<br />
                     {memorial.responsavelTecnico.cargo}<br />
                     {memorial.responsavelTecnico.registroCFT}
                   </p>
-                  <p className="mb-8">____________________________________________</p>
-                  <p className="font-semibold">Assinatura</p>
+                  <p className="mb-2 h-8">____________________________________________</p>
                 </div>
               ) : (
                 <div className="mt-8 text-center">
@@ -281,25 +298,31 @@ Data: ${new Date().toLocaleDateString()}
                 </div>
               )}
 
-              <div className="mt-16 pt-8 border-t">
-                <h2 className="text-lg font-semibold mb-6 text-center">Tabela de Assinaturas</h2>
-                <div className="flex flex-wrap justify-between">
-                  <div className="w-full md:w-[48%] space-y-6">
-                    <h3 className="text-center font-medium">Beneficiários</h3>
+              <div className="mt-8 pt-8">
+                {/* Assinaturas em duas colunas */}
+                <div className="signature-container">
+                  <div className="w-full text-center mb-6">
+                    <h2 className="text-lg font-semibold mb-4">Assinaturas</h2>
+                  </div>
+                  
+                  {/* Coluna 1 - Beneficiários */}
+                  <div className={`${isMobile ? 'w-full' : 'w-[48%]'} space-y-10`}>
+                    <h3 className="text-center font-medium border-b pb-2 mb-4">Beneficiários</h3>
                     {memorial.beneficiarios.map((beneficiario) => (
-                      <div key={beneficiario.id} className="text-center">
-                        <p className="mb-8">____________________________________________</p>
+                      <div key={beneficiario.id} className="text-center mb-8">
+                        <span className="signature-line py-6 inline-block">&nbsp;</span>
                         <p className="font-semibold">{beneficiario.nome}</p>
                         <p className="text-sm text-gray-500">{beneficiario.documento}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="w-full md:w-[48%] space-y-6">
-                    <h3 className="text-center font-medium">Confrontantes</h3>
+                  {/* Coluna 2 - Confrontantes */}
+                  <div className={`${isMobile ? 'w-full' : 'w-[48%]'} space-y-10`}>
+                    <h3 className="text-center font-medium border-b pb-2 mb-4">Confrontantes</h3>
                     {memorial.confrontantes.map((confrontante) => (
-                      <div key={confrontante.id} className="text-center">
-                        <p className="mb-8">____________________________________________</p>
+                      <div key={confrontante.id} className="text-center mb-8">
+                        <span className="signature-line py-6 inline-block">&nbsp;</span>
                         <p className="font-semibold">{confrontante.nome}</p>
                         <p className="text-sm text-gray-500">{confrontante.documento}</p>
                       </div>

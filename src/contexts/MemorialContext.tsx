@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Projeto, Beneficiario, Confrontante, Vertice, MemorialDescritivo, ResponsavelTecnico } from "../types";
 import { useToast } from "@/components/ui/use-toast";
@@ -170,6 +169,15 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
       title: "Vértices importados",
       description: `${importedVertices.length} vértices foram importados com sucesso.`,
     });
+  };
+
+  const setProjeto = (newProjeto: Projeto) => {
+    localStorage.setItem("memorial_projeto", JSON.stringify(newProjeto));
+    toast({
+      title: "Projeto atualizado",
+      description: "Dados do projeto foram atualizados com sucesso.",
+    });
+    return;
   };
 
   const getMemorialDescritivo = (): MemorialDescritivo | null => {
