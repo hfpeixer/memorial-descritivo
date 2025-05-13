@@ -11,6 +11,8 @@ import { v4 as uuidv4 } from "uuid";
 import { formatCoordinates } from "@/utils/masks";
 import { X, Upload, FileInput } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface VerticeImportFormProps {
   onClose: () => void;
@@ -26,7 +28,8 @@ interface ImportedRow {
 }
 
 const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
-  const { importVertices, confrontantes } = useMemorial();
+  const { importVertices, confrontantes, projeto, setProjeto } = useMemorial();
+  const { toast } = useToast();
   const [importMethod, setImportMethod] = useState<"csv" | "paste">("paste");
   const [pastedData, setPastedData] = useState("");
   const [fileData, setFileData] = useState<File | null>(null);
@@ -37,11 +40,14 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     longitude: 2,
     latitude: 3,
     distancia: 4,
-    confrontante: 5
+    confrontante: 5,
+    endereco: 6 // Coluna para endereço
   });
   const [delimiter, setDelimiter] = useState(",");
   const [previewData, setPreviewData] = useState<string[][]>([]);
   const [defaultConfrontante, setDefaultConfrontante] = useState("");
+  const [detectedAddress, setDetectedAddress] = useState("");
+  const [showAddressAlert, setShowAddressAlert] = useState(false);
   
   useEffect(() => {
     if (confrontantes.length > 0) {
@@ -75,6 +81,21 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     });
     
     setPreviewData(parsedData);
+
+    // Tenta detectar endereço se o projeto não tiver endereço
+    if (projeto && !projeto.endereco && parsedData.length > 0) {
+      // Verificar a coluna do endereço em todas as linhas
+      for (let i = 0; i < parsedData.length; i++) {
+        if (parsedData[i].length > columnMapping.endereco) {
+          const possibleAddress = parsedData[i][columnMapping.endereco]?.trim();
+          if (possibleAddress && possibleAddress.length > 5) {
+            setDetectedAddress(possibleAddress);
+            setShowAddressAlert(true);
+            break;
+          }
+        }
+      }
+    }
   };
 
   const handlePastedDataChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -104,6 +125,21 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     }
   };
 
+  const applyDetectedAddress = () => {
+    if (projeto && detectedAddress) {
+      setProjeto({
+        ...projeto,
+        endereco: detectedAddress
+      });
+      
+      toast({
+        title: "Endereço atualizado",
+        description: `O endereço do imóvel foi automaticamente preenchido.`,
+      });
+      setShowAddressAlert(false);
+    }
+  };
+
   const processImport = () => {
     const vertices: Vertice[] = [];
     
@@ -112,7 +148,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
       //if (index === 0 && previewData.length > 1) return;
       
       // Verificar se a linha tem dados suficientes
-      if (row.length > Math.max(...Object.values(columnMapping))) {
+      if (row.length > Math.max(columnMapping.deVertice, columnMapping.paraVertice, columnMapping.longitude, columnMapping.latitude)) {
         const confrontanteId = row[columnMapping.confrontante]?.trim() || defaultConfrontante;
         
         const vertice: Vertice = {
@@ -134,6 +170,12 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     
     if (vertices.length > 0) {
       importVertices(vertices);
+      
+      // Aplicar endereço detectado automaticamente se houver e o endereço do projeto estiver vazio
+      if (projeto && !projeto.endereco && detectedAddress) {
+        applyDetectedAddress();
+      }
+      
       onClose();
     }
   };
@@ -148,6 +190,19 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
           </Button>
         </CardHeader>
         <CardContent className="space-y-6">
+          {showAddressAlert && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <span>
+                  Endereço do imóvel detectado nos dados importados: <strong>{detectedAddress}</strong>
+                </span>
+                <Button onClick={applyDetectedAddress} size="sm" className="whitespace-nowrap">
+                  Usar este endereço
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex gap-4">
             <Button 
               variant={importMethod === "paste" ? "default" : "outline"} 
@@ -189,7 +244,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
                 <Label htmlFor="paste-data">Cole seus dados aqui (uma linha por vértice):</Label>
                 <Textarea
                   id="paste-data"
-                  placeholder="V1,V2,00°00'00.0&quot;W,00°00'00.0&quot;S,10.5,Confrontante"
+                  placeholder="V1,V2,00°00'00.0&quot;W,00°00'00.0&quot;S,10.5,Confrontante,Endereço Imóvel"
                   className="h-32 mt-1 font-mono"
                   value={pastedData}
                   onChange={handlePastedDataChange}
@@ -216,7 +271,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
 
             <div>
               <h3 className="text-md font-medium mb-2">Mapeamento de Colunas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="col-from">De Vértice:</Label>
                   <Input 
@@ -275,6 +330,16 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
                     min="0"
                     value={columnMapping.confrontante}
                     onChange={(e) => handleColumnMappingChange("confrontante", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="col-endereco">Endereço (opcional):</Label>
+                  <Input 
+                    id="col-endereco"
+                    type="number"
+                    min="0"
+                    value={columnMapping.endereco}
+                    onChange={(e) => handleColumnMappingChange("endereco", e.target.value)}
                   />
                 </div>
               </div>

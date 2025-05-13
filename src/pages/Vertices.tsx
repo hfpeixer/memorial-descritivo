@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -40,7 +39,8 @@ const Vertices = () => {
   };
 
   const handleEdit = (vertice: Vertice) => {
-    setEditingVertice(vertice);
+    // Make sure to pass the complete vertex object
+    setEditingVertice({...vertice});
     setShowForm(true);
   };
 

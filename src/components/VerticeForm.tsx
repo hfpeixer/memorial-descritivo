@@ -29,17 +29,25 @@ const VerticeForm: React.FC<VerticeFormProps> = ({ vertice, onClose }) => {
     confrontanteId: "",
   });
 
+  // Fix: Update useEffect to properly set formData when editing a vertex
   useEffect(() => {
     if (vertice) {
-      setFormData(vertice);
+      // Using the spread operator to create a complete copy of the vertice
+      setFormData({
+        ...vertice
+      });
     } else {
       setFormData({ 
-        ...formData, 
         id: uuidv4(),
+        deVertice: "",
+        paraVertice: "",
+        longitude: "",
+        latitude: "",
+        distancia: 0,
         confrontanteId: confrontantes.length > 0 ? confrontantes[0].id : "",
       });
     }
-  }, [vertice]);
+  }, [vertice, confrontantes]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

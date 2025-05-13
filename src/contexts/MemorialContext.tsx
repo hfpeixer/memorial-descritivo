@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Projeto, Beneficiario, Confrontante, Vertice, MemorialDescritivo, ResponsavelTecnico } from "../types";
 import { useToast } from "@/components/ui/use-toast";
@@ -41,7 +40,7 @@ interface MemorialProviderProps {
 }
 
 export const MemorialProvider = ({ children }: MemorialProviderProps) => {
-  const [projeto, setProjeto] = useState<Projeto | null>(null);
+  const [projeto, setProjetoState] = useState<Projeto | null>(null);
   const [beneficiarios, setBeneficiarios] = useState<Beneficiario[]>([]);
   const [confrontantes, setConfrontantes] = useState<Confrontante[]>([]);
   const [vertices, setVertices] = useState<Vertice[]>([]);
@@ -56,7 +55,7 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
     const loadedVertices = localStorage.getItem("memorial_vertices");
     const loadedResponsavelTecnico = localStorage.getItem("memorial_responsavel_tecnico");
 
-    if (loadedProjeto) setProjeto(JSON.parse(loadedProjeto));
+    if (loadedProjeto) setProjetoState(JSON.parse(loadedProjeto));
     if (loadedBeneficiarios) setBeneficiarios(JSON.parse(loadedBeneficiarios));
     if (loadedConfrontantes) setConfrontantes(JSON.parse(loadedConfrontantes));
     if (loadedVertices) setVertices(JSON.parse(loadedVertices));
@@ -172,6 +171,15 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
     });
   };
 
+  const setProjeto = (newProjeto: Projeto) => {
+    setProjetoState(newProjeto);
+    localStorage.setItem("memorial_projeto", JSON.stringify(newProjeto));
+    toast({
+      title: "Projeto atualizado",
+      description: "Dados do projeto foram atualizados com sucesso.",
+    });
+  };
+
   const getMemorialDescritivo = (): MemorialDescritivo | null => {
     if (!projeto || beneficiarios.length === 0 || confrontantes.length === 0 || vertices.length === 0) {
       toast({
@@ -192,7 +200,7 @@ export const MemorialProvider = ({ children }: MemorialProviderProps) => {
   };
 
   const resetMemorial = () => {
-    setProjeto(null);
+    setProjetoState(null);
     setBeneficiarios([]);
     setConfrontantes([]);
     setVertices([]);
