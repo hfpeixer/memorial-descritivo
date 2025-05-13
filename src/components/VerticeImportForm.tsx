@@ -109,7 +109,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     
     previewData.forEach((row, index) => {
       // Pular a linha de cabeçalho, se houver
-      if (index === 0 && previewData.length > 1) return;
+      //if (index === 0 && previewData.length > 1) return;
       
       // Verificar se a linha tem dados suficientes
       if (row.length > Math.max(...Object.values(columnMapping))) {
