@@ -41,7 +41,7 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     latitude: 3,
     distancia: 4,
     confrontante: 5,
-    endereco: 6 // Nova coluna para endereço
+    endereco: 6 // Coluna para endereço
   });
   const [delimiter, setDelimiter] = useState(",");
   const [previewData, setPreviewData] = useState<string[][]>([]);
@@ -171,8 +171,8 @@ const VerticeImportForm: React.FC<VerticeImportFormProps> = ({ onClose }) => {
     if (vertices.length > 0) {
       importVertices(vertices);
       
-      // Aplicar endereço detectado se houver e o usuário confirmou
-      if (showAddressAlert && detectedAddress) {
+      // Aplicar endereço detectado automaticamente se houver e o endereço do projeto estiver vazio
+      if (projeto && !projeto.endereco && detectedAddress) {
         applyDetectedAddress();
       }
       
